@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# mixf
+#   Obfuscate a file.
+#   NOTE: This is a reversible process. Thus,
+#         "mixf myfile.txt | mixf" will yield
+#         the original text in myfile.txt.
+
+error_msg() {
+    >&2 echo "$1"
+}
+
+if [[ -z $1 ]]; then
+    if [[ ! -p /dev/stdin ]]; then
+        error_msg "Error: no file specified."
+        exit 2
+    fi
+else
+    if [[ ! -f $1 ]]; then
+        error_msg "Error: file not found \"$1\"."
+        exit 2
+    fi
+    if [[ -p /dev/stdin ]]; then
+        error_msg "Error: extraneous parameter \"$1\"."
+        exit 22
+    fi
+    if [[ ! -z $2 ]]; then
+        error_msg "Error: only one filename may be given."
+        exit 22
+    fi
+    exec <$1
+fi
+
+while IFS= read -r line; do
+
+    MIX=""
+
+    for (( ix=${#line}; ix>0; ix-- )); do
+        (( nx=ix-1 ))
+        CHR=${line:nx:1}
+        case "$CHR" in
+        s) CHR="E";;
+        e) CHR="S";;
+        c) CHR="U";;
+        u) CHR="C";;
+        r) CHR="I";;
+        i) CHR="R";;
+        t) CHR="Y";;
+        y) CHR="T";;
+        S) CHR="e";;
+        E) CHR="s";;
+        C) CHR="u";;
+        U) CHR="c";;
+        R) CHR="i";;
+        I) CHR="r";;
+        T) CHR="y";;
+        Y) CHR="t";;
+        m) CHR=" ";;
+        n) CHR=".";;
+        " ") CHR="m";;
+        ".") CHR="n";;
+        esac
+        MIX=$MIX$CHR
+    done
+
+    echo "$MIX"
+
+done
